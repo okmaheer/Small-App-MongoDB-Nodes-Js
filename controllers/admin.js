@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require("express-validator");
 
 const Product = require('../models/product');
 
@@ -21,7 +21,7 @@ exports.postAddProduct = (req, res, next) => {
   const price = req.body.price;
   const description = req.body.description;
   const errors = validationResult(req);
-
+console.log(req.file);
   if (!errors.isEmpty()) {
     console.log(errors.array());
     return res.status(422).render('admin/edit-product', {

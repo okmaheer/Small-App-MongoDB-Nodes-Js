@@ -7,20 +7,37 @@ const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
+const multer = require('multer');
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 const MONGODB_URI =
-'mongodb+srv://root:root@cluster0.ps3p8.mongodb.net/test?retryWrites=true&w=majority';
+  'mongodb+srv://root:root@cluster0.ps3p8.mongodb.net/test?retryWrites=true&w=majority';
 
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: 'sessions'
 });
-const csrfProtection = csrf();
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'images');
+  },
+  filename: (req, file, cb) => {
 
+    let randomShit = Math.floor(Math.random() * 1000) + 1;
+    cb(null, randomShit + '-' + file.originalname);
+  },
+});
+const csrfProtection = csrf();
+const fileFilter = (req, file, cb) => {
+  if (file.mimeType === 'image/png' || file.mimeType === 'image/jpg', file.mimeType === 'image/jpeg') {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+}
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
@@ -29,6 +46,7 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(
   session({
@@ -84,8 +102,8 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-.connect(MONGODB_URI,{ useNewUrlParser: true,useUnifiedTopology: true })
-.then(result => {
+  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(result => {
     app.listen(3000);
   })
   .catch(err => {
