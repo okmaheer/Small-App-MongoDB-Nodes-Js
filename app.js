@@ -13,13 +13,15 @@ const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 const MONGODB_URI =
-  'mongodb+srv://root:root@cluster0.ps3p8.mongodb.net/test?retryWrites=true&w=majority';
+'mongodb+srv://root:root@cluster0.ps3p8.mongodb.net/test?retryWrites=true&w=majority';
 
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: 'sessions'
 });
+const csrfProtection = csrf();
+
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'images');
@@ -30,14 +32,19 @@ const fileStorage = multer.diskStorage({
     cb(null, randomShit + '-' + file.originalname);
   },
 });
-const csrfProtection = csrf();
+
 const fileFilter = (req, file, cb) => {
-  if (file.mimeType === 'image/png' || file.mimeType === 'image/jpg', file.mimeType === 'image/jpeg') {
+  if (
+    file.mimetype === 'image/png' ||
+    file.mimetype === 'image/jpg' ||
+    file.mimetype === 'image/jpeg'
+  ) {
     cb(null, true);
   } else {
     cb(null, false);
   }
-}
+};
+
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
@@ -46,8 +53,11 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'));
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single('image')
+);
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use(
   session({
     secret: 'my secret',
@@ -102,7 +112,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(result => {
     app.listen(3000);
   })
